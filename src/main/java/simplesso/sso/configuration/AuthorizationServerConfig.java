@@ -10,6 +10,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
@@ -17,6 +18,10 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import simplesso.sso.utils.JwkUtils;
+
+import java.nio.file.Path;
+import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
 import java.util.List;
 
 @Configuration(proxyBeanMethods = false)
@@ -39,18 +44,30 @@ public class AuthorizationServerConfig {
     }
 
     @Bean
-    public JWKSource<SecurityContext> jwkSource() {
-        JWK jwk = JwkUtils.generateEc();
+    public JWKSource<SecurityContext> jwkSource(JwtProperties properties) throws Exception {
+        ECPublicKey publicKey;
+        ECPrivateKey privateKey;
+        if(!properties.isGenerateTemp()) {
+            publicKey = JwkUtils.readECPublicKey(Path.of(properties.getPublicKeyPath()));
+            privateKey = JwkUtils.readECPrivateKey(Path.of(properties.getPrivateKeyPath()));
+        } else {
+            var pair = JwkUtils.generateECKeys();
+            publicKey = (ECPublicKey) pair.getPublic();
+            privateKey = (ECPrivateKey) pair.getPrivate();
+        }
+        JWK jwk = JwkUtils.getEcKey(publicKey, privateKey);
         return (jwkSelector, securityContext) -> List.of(jwk);
     }
 
     @Bean
     public OAuth2TokenCustomizer<JwtEncodingContext> oauth2AccessTokenCustomizer() {
         return (ctx) -> {
-            List<String> roles = ctx.getPrincipal().getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
-            ctx.getClaims().claims((map) -> {
-                map.put("authorities", roles);
-            });
+            if (ctx.getTokenType() == OAuth2TokenType.ACCESS_TOKEN) {
+                List<String> roles = ctx.getPrincipal().getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
+                ctx.getClaims().claims((map) -> {
+                    map.put("roles", roles);
+                });
+            }
             ctx.getJwsHeader().algorithm(SignatureAlgorithm.ES256);
         };
     }

@@ -17,3 +17,5 @@ spring:
       authorizationserver:
         issuer-url: http://localhost:7777
         introspection-endpoint: /oauth2/token-info
+jwt:
+  generateTemp: true
