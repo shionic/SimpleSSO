@@ -25,6 +25,9 @@ public class DebugDatabaseInitRunner implements CommandLineRunner {
     private PasswordEncoder passwordEncoder;
     @Override
     public void run(String... args) throws Exception {
+        if(args.length == 0 || !args[0].equals("--startup")) {
+            return;
+        }
         UserRole adminRole = new UserRole();
         adminRole.setId("ADMIN");
         adminRole = userRoleRepository.save(adminRole);

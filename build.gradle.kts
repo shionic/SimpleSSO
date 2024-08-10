@@ -20,6 +20,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-oauth2-authorization-server")
 	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("com.google.crypto.tink:tink:1.9.0")
 	implementation("org.slf4j:slf4j-api:2.0.7")
 	implementation("org.slf4j:jcl-over-slf4j:2.0.7")
 	runtimeOnly("org.postgresql:postgresql")
