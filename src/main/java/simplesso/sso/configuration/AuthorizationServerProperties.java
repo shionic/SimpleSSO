@@ -1,5 +1,7 @@
 package simplesso.sso.configuration;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -23,5 +25,9 @@ public class AuthorizationServerProperties {
 
     public String getIntrospectionEndpoint() {
         return introspectionEndpoint;
+    }
+
+    public void setIntrospectionEndpoint(String introspectionEndpoint) {
+        this.introspectionEndpoint = introspectionEndpoint;
     }
 }

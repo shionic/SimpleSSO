@@ -12,6 +12,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
@@ -28,6 +29,8 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import simplesso.sso.models.User;
+import simplesso.sso.models.UserRole;
 import simplesso.sso.utils.JwkUtils;
 import java.util.List;
 
@@ -59,6 +62,14 @@ public class AuthorizationServerConfig {
     @Bean
     public OAuth2TokenCustomizer<JwtEncodingContext> oauth2AccessTokenCustomizer() {
         return (ctx) -> {
+            try {
+                List<String> roles = ctx.getPrincipal().getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
+                ctx.getClaims().claims((map) -> {
+                    map.put("authorities", roles);
+                });
+            }catch (Throwable e) {
+                e.printStackTrace();
+            }
             ctx.getJwsHeader().algorithm(SignatureAlgorithm.ES256);
         };
     }
@@ -67,6 +78,7 @@ public class AuthorizationServerConfig {
     public AuthorizationServerSettings authorizationServerSettings() {
         return AuthorizationServerSettings.builder()
                 .issuer(authorizationServerProperties.getIssuerUrl())
+                .tokenIntrospectionEndpoint(authorizationServerProperties.getIntrospectionEndpoint())
                 .build();
     }
 }
