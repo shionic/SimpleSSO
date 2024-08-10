@@ -34,6 +34,8 @@ public class Client {
                 .clientId(clientId)
                 .clientSecret(clientSecret)
                 .redirectUri(redirectUri)
+                .scope("read.scope")
+                .scope("write.scope")
                 .tokenSettings(TokenSettings.builder()
                         .accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED)
                         .accessTokenTimeToLive(Duration.of(30, ChronoUnit.MINUTES))

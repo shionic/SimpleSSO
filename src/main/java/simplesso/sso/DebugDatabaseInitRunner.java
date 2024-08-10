@@ -36,7 +36,7 @@ public class DebugDatabaseInitRunner implements CommandLineRunner {
         Client client = new Client();
         client.setId("test-client-id");
         client.setClientId("test-client");
-        client.setClientSecret("{noop}test-client");
+        client.setClientSecret(passwordEncoder.encode("test-client"));
         client.setClientName("Test Client");
         client.setRedirectUri("http://localhost:5000/code");
         clientRepository.save(client);
