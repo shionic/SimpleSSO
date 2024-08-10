@@ -17,6 +17,7 @@ import org.springframework.security.oauth2.server.authorization.token.JwtEncodin
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import simplesso.sso.models.User;
 import simplesso.sso.utils.JwkUtils;
 
 import java.nio.file.Path;
@@ -47,13 +48,13 @@ public class AuthorizationServerConfig {
     public JWKSource<SecurityContext> jwkSource(JwtProperties properties) throws Exception {
         ECPublicKey publicKey;
         ECPrivateKey privateKey;
-        if(!properties.isGenerateTemp()) {
-            publicKey = JwkUtils.readECPublicKey(Path.of(properties.getPublicKeyPath()));
-            privateKey = JwkUtils.readECPrivateKey(Path.of(properties.getPrivateKeyPath()));
-        } else {
+        if (properties.isGenerateTemp()) {
             var pair = JwkUtils.generateECKeys();
             publicKey = (ECPublicKey) pair.getPublic();
             privateKey = (ECPrivateKey) pair.getPrivate();
+        } else {
+            publicKey = JwkUtils.readECPublicKey(Path.of(properties.getPublicKeyPath()));
+            privateKey = JwkUtils.readECPrivateKey(Path.of(properties.getPrivateKeyPath()));
         }
         JWK jwk = JwkUtils.getEcKey(publicKey, privateKey);
         return (jwkSelector, securityContext) -> List.of(jwk);
@@ -63,8 +64,10 @@ public class AuthorizationServerConfig {
     public OAuth2TokenCustomizer<JwtEncodingContext> oauth2AccessTokenCustomizer() {
         return (ctx) -> {
             if (ctx.getTokenType() == OAuth2TokenType.ACCESS_TOKEN) {
-                List<String> roles = ctx.getPrincipal().getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
+                User user = (User) ctx.getPrincipal().getPrincipal();
+                List<String> roles = user.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
                 ctx.getClaims().claims((map) -> {
+                    map.put("userId", user.getId());
                     map.put("roles", roles);
                 });
             }
